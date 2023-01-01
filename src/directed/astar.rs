@@ -7,6 +7,7 @@ use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashSet};
 use std::hash::Hash;
 use std::iter::FusedIterator;
+use std::ops::Sub;
 use std::usize;
 
 use super::reverse_path;
@@ -159,7 +160,7 @@ pub fn limited_astar<N, C, FN, IN, FH, FS>(
 ) -> Vec<N>
 where
     N: Eq + Hash + Clone,
-    C: Zero + Ord + Copy,
+    C: Zero + Ord + Copy + Sub<C, Output = C>,
     FN: FnMut(&N) -> IN,
     IN: IntoIterator<Item = (N, C)>,
     FH: FnMut(&N) -> C,
@@ -198,6 +199,9 @@ where
             match parents.entry(successor) {
                 Vacant(e) => {
                     h = heuristic(e.key());
+                    if h - (max_cost - new_cost) > best.0 {
+                        continue;
+                    }
                     n = e.index();
                     e.insert((index, new_cost));
                 }
@@ -206,6 +210,9 @@ where
                         h = heuristic(e.key());
                         n = e.index();
                         e.insert((index, new_cost));
+                        if h - (max_cost - new_cost) > best.0 {
+                            continue;
+                        }
                     } else {
                         continue;
                     }
